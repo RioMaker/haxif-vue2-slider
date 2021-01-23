@@ -2,22 +2,25 @@
   <div class="test">
     <div>
       {{ value_y }}
+      <input type="text" v-model="value_y">
     </div>
     <!-- 
       :vertical 滑动条朝向
-      v-on:value 获取值 0~100 
+      v-model 双向绑定 默认0~100 
       max 最大值
       min 最小值
       step 步长
+      is_demo 测试下svg图标
       --> 
     <slider class="test-color" 
       :vertical="true" 
-      v-on:value="getVal"
-      :step="5"
+      v-model="value_y"
+      :step="50"
+      :is_demo="true"
       >
       <!-- 更改拖拽按钮图标格式 -->
-      <template #thumb>
-        <!-- 支持svg图标 -->
+      <!-- 支持svg图标 : 已下为示范-->
+      <!-- <template #thumb>
         <svg
           t="1611396965803"
           class="icon"
@@ -56,7 +59,7 @@
             p-id="2605"
           ></path>
         </svg>
-      </template>
+      </template> -->
     </slider>
   </div>
 </template>
@@ -69,13 +72,18 @@ export default {
   },
   data() {
     return {
-      value_y: 100,
+      value_y: '100',
     };
   },
+  watch:{
+    // value_cache(val){
+    //   this.value_y = Number(val)
+    // }
+  },
   methods: {
-    getVal(val) {
-      this.value_y = val;
-    },
+    // getVal(val) {
+    //   this.value_y = val;
+    // },
   },
 };
 </script>
@@ -91,6 +99,7 @@ export default {
 }
 .test-color {
   margin-top: 50px;
+  padding: 20px;
   border: 1px solid #24ccff;
 }
 </style>

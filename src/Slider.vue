@@ -20,8 +20,8 @@
           ref="processbox"
           @click="processClick"
           :style="{
-            '--clip-a': Number(25 - process / 15) + 'px',
-            '--clip-b': Number((200 - process) / 2) + '%',
+            '--clip-a': Number(25) + 'px',
+            '--clip-b': Number(process) + '%',
           }"
         ></div>
         <x-button
@@ -149,16 +149,16 @@ export default {
   },
   props: {
     value: {
-      type: String,
-      default:()=>{
-        return 100
-      }
+      type: Number || String,
+      default: () => {
+        return 100;
+      },
     },
-    is_demo:{
-      type:Boolean,
-      default:()=>{
-        return false
-      }
+    is_demo: {
+      type: Boolean,
+      default: () => {
+        return false;
+      },
     },
     vertical: {
       type: Boolean,
@@ -197,21 +197,31 @@ export default {
   },
   watch: {
     value(val) {
-      if (Number(val) !== Number(this.last_emit)) {
-        let result = this.logic(val);
-        if (result != this.process) {
-          this.process = result * 2;
-          this.$emit("vmodel", String(result));
+      if (Number(val) != Number(this.last_emit)) {
+        let result = Number(this.logic(val));
+        if (result != Number(this.last_emit)) {
+          // console.log(val, result);
+          // let _processbox = this.vertical
+          //   ? this.$refs.processbox.offsetHeight
+          //   : this.$refs.processbox.offsetWidth;
+          this.process_cache = val;
+          // this.$emit("vmodel", String(result));
+          this.last_emit = String(val);
         }
       }
     },
     process_cache(val) {
-      let result = this.logic(val / 2);
+      val = Number(val)
+      let result = this.logic(val);
+      let _processbox = this.vertical
+        ? this.$refs.processbox.offsetHeight
+        : this.$refs.processbox.offsetWidth;
       // if (result != this.process) {
-        // console.log('p_cache',this.max-result,this.max);
-        this.last_emit = String(this.max-result);
-        this.$emit("vmodel", String(this.max-result));
-        this.process = result * 2;
+      // console.log('p_cache',this.max-result,this.max);
+      this.last_emit = String(result);
+      this.$emit("vmodel", String(result));
+      this.process =
+        ((this.max - result) / (this.max - this.min)) * _processbox;
       // }
     },
   },
@@ -239,21 +249,25 @@ export default {
     logic(val) {
       let _cache = Number(val);
       // console.log("logic:_cache:", _cache);
-      if (_cache < this.min) {
-        _cache = this.min;
-      } else if (_cache > this.max) {
-        _cache = this.max;
+      if (_cache <= this.min) {
+        _cache = Number(this.min);
+        // console.log(this.min);
+        return this.min;
+      } else if (_cache >= this.max) {
+        _cache = Number(this.max);
+        // console.log(this.max);
+        return this.max;
       }
       // let base_step = (this.max - this.min) / this.step + 1;
       let check_list = String(
         ((_cache - this.min) / this.step).toFixed(1)
       ).split(".");
-      let result =((
-        Number(check_list[0]) +
-        (Number(check_list[1]) >= 5 ? 1 : 0)
-      )*this.step);
-      console.log("logic-checklist:", check_list);
-      console.log('logic-result:',result);
+      let result =
+        (Number(check_list[0]) + (Number(check_list[1]) >= 5 ? 1 : 0)) *
+          this.step +
+        this.min;
+      // console.log("logic-checklist:", check_list);
+      // console.log("logic-result:", result);
       return result;
     },
     // 点击条上位置赋值
@@ -261,11 +275,17 @@ export default {
       if (this.is_down) {
         return;
       } else {
+        let _process = this.vertical
+          ? this.$refs.processbox.offsetHeight
+          : this.$refs.processbox.offsetWidth;
         if (this.vertical) {
-          this.process_cache = e.offsetY;
+          this.process_cache =
+            this.max - (e.offsetY / _process) * (this.max - this.min);
         } else {
-          this.process_cache = e.offsetX;
+          this.process_cache =
+            this.max - (e.offsetX / _process) * (this.max - this.min);
         }
+        // console.log(this.process_cache);
         // console.log(this.is_down);
         // console.log("cclick");
       }
@@ -275,7 +295,7 @@ export default {
       this.is_down = true;
       this.base_y = e.clientY;
       this.base_x = e.clientX;
-      this.process_cache = this.process;
+      this.process_cache = this.value;
       window.addEventListener("mouseup", this.thumbUp, true);
       // window.addEventListener('mousemove',this.thumbMoveY,true)
       // console.log("set(process_cache):", this.process_cache);
@@ -284,17 +304,23 @@ export default {
       if (this.is_down) {
         let vary_y = e.clientY - this.base_y;
         let vary_x = e.clientX - this.base_x;
-        let p_cache = this.process_cache + (this.vertical ? vary_y : vary_x);
-        if (p_cache <= 0) {
-          this.process_cache = 0;
-        } else if (p_cache >= 200) {
-          this.process_cache = 200;
+        let process_max = this.vertical
+          ? this.$refs.processbox.offsetHeight
+          : this.$refs.processbox.offsetWidth;
+        let res_y = (vary_y / Number(process_max)) * (this.max - this.min);
+        let res_x = (vary_x / Number(process_max)) * (this.max - this.min);
+        let p_cache = this.process_cache - (this.vertical ? res_y : res_x);
+        if (p_cache < this.min) {
+          this.process_cache = this.min
+        } else if (p_cache > this.max) {
+          this.process_cache = this.max
         } else {
           if (this.vertical) {
-            this.process_cache += vary_y;
+            this.process_cache -= res_y;
             this.base_y += vary_y;
+            // console.log("cache:", this.process_cache, res_y);
           } else {
-            this.process_cache += vary_x;
+            this.process_cache -= res_x;
             this.base_x += vary_x;
           }
         }
@@ -351,7 +377,9 @@ export default {
   width: 7px;
   height: 200px;
   border-radius: 3px;
-  clip-path: ellipse(var(--clip-a) var(--clip-b) at 50% 100%);
+  clip-path: ellipse(
+    var(--clip-a) calc(100% - calc(var(--clip-b) / 2)) at 50% 100%
+  );
   background: var(--process-color, #4ec2f7);
 }
 .process-h {

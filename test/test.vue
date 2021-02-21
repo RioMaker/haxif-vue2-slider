@@ -2,7 +2,7 @@
   <div class="test">
     <div>
       {{ value_y }}
-      <input type="text" v-model="value_y">
+      <input type="text" v-model.number="value_cache" @keyup.enter="value_y=value_cache">
     </div>
     <!-- 
       :vertical 滑动条朝向
@@ -11,11 +11,14 @@
       min 最小值
       step 步长
       is_demo 测试下svg图标
+      processColor 自定义条颜色
       --> 
     <slider class="test-color" 
-      :vertical="true" 
-      v-model="value_y"
-      :step="50"
+      vertical
+      v-model.number="value_y"
+      :step="99"
+      :min="-1000"
+      :max="3000"
       :is_demo="true"
       >
       <!-- 更改拖拽按钮图标格式 -->
@@ -72,19 +75,10 @@ export default {
   },
   data() {
     return {
-      value_y: '100',
+      value_y: 100,
+      value_cache:0
     };
-  },
-  watch:{
-    // value_cache(val){
-    //   this.value_y = Number(val)
-    // }
-  },
-  methods: {
-    // getVal(val) {
-    //   this.value_y = val;
-    // },
-  },
+  }
 };
 </script>
 
